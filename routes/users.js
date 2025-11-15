@@ -10,14 +10,14 @@ router.post("/signup", (req, res) => {
   // On vérifie que la data est valide
   if (!checkBody(req.body, ["name", "email", "password"])) {
     res.json({ result: false, error: "Missing or empty fields" });
-    return; //indispensable, sinon il continue , renvoie erreur: Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+    return; 
   }
   // Vérifie si le user existe deja
   User.findOne({ email }).then((data) => {
     // On vérifie s'il est enregistré :
     if (data) {
       res.json({ result: false, error: "User already exists" });
-      return; //indispensable, sinon il continue, renvoie erreur: Error [ERR_HTTP_HEADERS_SENT]: Cannot set headers after they are sent to the client
+      return; 
 
       // si il n'a pas été trouvé, on crée un new User et on enregistre
     } else {
