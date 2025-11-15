@@ -1,5 +1,3 @@
-
-
 var express = require("express");
 var router = express.Router();
 const fetch = require("node-fetch");
@@ -9,7 +7,7 @@ const OWM_API_KEY = process.env.OWM_API_KEY;
 
 router.post("/", (req, res) => {
   console.log("post appelée");
-  
+
   const MAX_CITIES = 20;
 
   // Vérifier le nombre actuel de villes
@@ -18,7 +16,7 @@ router.post("/", (req, res) => {
       return res.json({
         result: false,
         error:
-          "Limite maximale de 20 villes atteinte. Veuillez en supprimer une",
+          "Limite maximale de 20 villes atteinte. Veuillez en supprimer une.",
       });
     }
 
@@ -29,7 +27,7 @@ router.post("/", (req, res) => {
       if (existingCity && existingCity._id) {
         return res.json({
           result: false,
-          error: "Cette ville est déjà enregistrée",
+          error: "Cette ville est déjà enregistrée!",
         });
       }
 
@@ -58,12 +56,14 @@ router.post("/", (req, res) => {
 
         .catch((err) => {
           console.error("Erreur ajout ville :", err);
-          res.json({ result: false, error: "Erreur interne serveur (catch)" });
+          res.json({
+            result: false,
+            error: "Ville non trouvée ou non valide.",
+          });
         });
     });
   });
 });
-
 
 router.get("/", (req, res) => {
   City.find().then((data) => {
@@ -78,7 +78,7 @@ router.get("/:cityName", (req, res) => {
     if (data) {
       res.json({ result: true, weather: data });
     } else {
-      res.json({ result: false, error: "City not found" });
+      res.json({ result: false, error: "Ville non trouvée ou non valide." });
     }
   });
 });
@@ -93,7 +93,7 @@ router.delete("/:cityName", (req, res) => {
         res.json({ result: true, weather: data });
       });
     } else {
-      res.json({ result: false, error: "City not found" });
+      res.json({ result: false, error: "Ville non trouvée ou non valide." });
     }
   });
 });
