@@ -1,24 +1,46 @@
+
+
 var express = require("express");
 var router = express.Router();
 const fetch = require("node-fetch");
 const City = require("../models/cities");
 
-
 const OWM_API_KEY = process.env.OWM_API_KEY;
 
 router.post("/", (req, res) => {
-  // Check if the city has not already been added
-  City.findOne({
-    cityName: { $regex: new RegExp(req.body.cityName, "i") },
-  }).then((dbData) => {
-    if (dbData === null) {
-      // Request OpenWeatherMap API for weather data
-      fetch(
+  console.log("post appelée");
+  
+  const MAX_CITIES = 20;
+
+  // Vérifier le nombre actuel de villes
+  City.countDocuments().then((count) => {
+    if (count >= MAX_CITIES) {
+      return res.json({
+        result: false,
+        error:
+          "Limite maximale de 20 villes atteinte. Veuillez en supprimer une",
+      });
+    }
+
+    // Vérifier si la ville existe déjà
+    return City.findOne({
+      cityName: { $regex: new RegExp(req.body.cityName, "i") },
+    }).then((existingCity) => {
+      if (existingCity && existingCity._id) {
+        return res.json({
+          result: false,
+          error: "Cette ville est déjà enregistrée",
+        });
+      }
+
+      // Appel API OpenWeatherMap
+
+      return fetch(
         `https://api.openweathermap.org/data/2.5/weather?q=${req.body.cityName}&appid=${OWM_API_KEY}&units=metric`
       )
         .then((response) => response.json())
         .then((apiData) => {
-          // Creates new document with weather data
+          // Enregistrer en BDD
           const newCity = new City({
             cityName: req.body.cityName,
             main: apiData.weather[0].main,
@@ -27,17 +49,21 @@ router.post("/", (req, res) => {
             tempMax: apiData.main.temp_max,
           });
 
-          // Finally save in database
-          newCity.save().then((newDoc) => {
-            res.json({ result: true, weather: newDoc });
-          });
+          newCity
+            .save()
+            .then((savedCity) =>
+              res.json({ result: true, weather: savedCity })
+            );
+        })
+
+        .catch((err) => {
+          console.error("Erreur ajout ville :", err);
+          res.json({ result: false, error: "Erreur interne serveur (catch)" });
         });
-    } else {
-      // City already exists in database
-      res.json({ result: false, error: "City already saved" });
-    }
+    });
   });
 });
+
 
 router.get("/", (req, res) => {
   City.find().then((data) => {
